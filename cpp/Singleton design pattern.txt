@@ -1,0 +1,27 @@
+----------------------------------------------------------------------------------
+Singleton design pattern (C++)
+----------------------------------------------------------------------------------
+Overview
+- Ensures only one instance of the class exists throughout the lifetime of a program
+- Provides global access point to that instance
+
+Implementation
+- static members
+- private constructor 
+- deleted/no copy controls
+- static Factory/access method
+
+Initialization
+- Early	(load time)
+- Lazy 	(when first used)
+
+How do I use it
+- Accessing the system(product) settings
+
+
+
+
+
+
+
+

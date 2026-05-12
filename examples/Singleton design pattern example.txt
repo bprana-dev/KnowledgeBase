@@ -1,0 +1,65 @@
+----------------------------------------------------------------------------------
+Singleton design pattern example
+----------------------------------------------------------------------------------
+
+Requirement : 	There should be only one instance where the system configuration information is stored 
+		Configuration info should be accessible to other modules
+		Configuration info should be available till the lifetime of program
+
+----------------------------------------------------------------------------------
+Configuration.h
+----------------------------------------------------------------------------------
+
+class Configuration
+{
+	public:
+	// access methods 
+		static Configuration *thisInstance;
+		static Configuration *GetInstance(void);
+		static void DeleteInstance(void);
+ 
+
+	private:
+	// private constructor and destructor
+		Configuration();
+		~Configuration();
+	// deleted copy controls
+		Configuration(const Configuration& inSrcObj) = delete;
+		Configuration& operator=(const Configuration& inSrcObj) = delete;
+
+};
+
+----------------------------------------------------------------------------------
+Configuration.cpp
+----------------------------------------------------------------------------------
+
+Configuration* Configuration::thisInstance = nullptr;
+
+Configuration* Configuration::GetInstance(void)
+{
+	if( thisInstance == nullptr)
+		thisInstance = new Configuration();
+	return thisInstance;
+}
+
+void Configuration::DeleteInstance(void)
+{
+	if(thisInstance != nullptr)
+	{
+		delete thisInstance;
+		thisInstance = nullptr;
+	}
+}
+
+----------------------------------------------------------------------------------
+Initialization Strategy
+----------------------------------------------------------------------------------
+
+This implementation uses Lazy Initialization:
+- The Configuration object is created only when first requested
+- Memory is allocated on the heap using new
+
+----------------------------------------------------------------------------------
+Remark
+----------------------------------------------------------------------------------
+- The instance exists until DeleteInstance() is explicitly called
