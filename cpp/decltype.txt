@@ -1,0 +1,52 @@
+----------------------------------------------------------------------------------
+decltype
+----------------------------------------------------------------------------------
+Overview
+- expressions are unevaluated and inspected to determine the type of variable 
+
+Understanding
+- decltype behaviour depends on what type expression is passed  
+____________________________________________________________________________________________________________________________________________________________
+Expression			Kind of expression			Result of decltype(...)			Meaning
+____________________________________________________________________________________________________________________________________________________________
+Variables(lvalue)
+----------------------------------------------------------------------------------
+decltype(a)			Unparenthesized variable name		int					Declared type of a
+decltype(ca)			Unparenthesized const variable name	const int				Declared type of ca
+decltype((a))			Parenthesized lvalue expression		int&					Reference to a
+decltype((ca))			Parenthesized lvalue expression		const int&				const is preserved
+decltype(a = b)			Assignment expression (lvalue)		int&					Reference to left-hand side (a)
+----------------------------------------------------------------------------------
+Rvalue expressions (prvalues)
+----------------------------------------------------------------------------------
+decltype(42)  			rvalue expression			int					Value type
+decltype(a + b) 		rvalue expression			int					Value type
+----------------------------------------------------------------------------------
+Pointers
+----------------------------------------------------------------------------------
+decltype(p)			Unparenthesized variable name		int *					Declared type of p
+decltype(pc)			Unparenthesized variable name		const int *				Declared type of pc
+decltype(*p)			lvalue expression			int&
+decltype(*pc)			lvalue expression			const int&
+----------------------------------------------------------------------------------
+References
+----------------------------------------------------------------------------------
+decltype(r)			Unparenthesized reference r		int&					Reference stays reference
+decltype((r))			Parenthesized reference r		int&					Still the lvalue expression
+decltype(cr)			Reference to const			const int&				const is preserved
+
+
+Remark:
+- For plain variable names, it returns the declared type
+- Parentheses change the result by turning a name into an expression
+- decltype preserves references for lvalue expressions
+- If the expression is an rvalue, decltype yields the value type (non-reference)
+- decltype preserves constness
+
+Mental Model
+- If a variable name 	--> value type
+- Any lvalue expression	--> reference type
+- Dereferencing (*p) 	--> almost always lvalue
+- const is always preserved
+
+
