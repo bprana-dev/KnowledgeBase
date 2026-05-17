@@ -1,0 +1,61 @@
+----------------------------------------------------------------------------------
+Smart pointers
+----------------------------------------------------------------------------------
+Overview
+- Automatic dynamic memory management
+- Implemented as Template classes
+- Ensure that the objects to which they point are automatically freed when it is appropriate to do so
+- Defined in <memory> header (#include <memory>)
+----------------------------------------------------------------------------------
+Understanding
+- Types
+	- Shared pointer (shared_ptr)
+		Shared ownership of dynamically allocated objects
+		- Syntax
+			- shared_ptr<T> shared_pointer_name;
+			- shared_ptr<T> shared_pointer_name = make_shared<T>(args);
+		- Functions
+			- make_shared<T>(args)			: return pointer to created shared object
+			- shared_pointer_name.use_count()	: returns number of shared_ptr instances owning object
+			- shared_pointer_name.unique()		: checks if only one access to shared object exists ( depreceated in C++17,removed in C++ 20)
+			- shared_pointer_name.reset()		: release ownership and decrement the reference count
+			- shared_pointer_name.get()		: returns raw pointer (reference count not incremented)
+		- Characteristics
+			- Copying a shared_ptr adds to the reference count of that object.
+			- When reference count goes to zero the object is deleted
+			- Reference count(strong & weak) is stored in control block 
+			- Control block also contains information for custom deleter/allocator if any
+			- Types of Control Blocks
+				- Combined control block	: created when the shared_ptr created from make_shared/allocate_shared
+				- Separate control block	: created when the shared_ptr created from existing raw pointer
+				- Array control block		: Introduced in C++ 20
+	- Unique pointer (unique_ptr)
+		Exclusive ownership of dynamically allocated objects
+		- Syntax
+			- unique_ptr<T> unique_pointer_name;
+		- Functions
+			- unique_pointer_name.reset()		: deletes owned object and optionally take the ownership of new one
+			- unique_pointer_name.release()		: releases ownership and returns the raw pointer (no deletion)
+			- unique_pointer_name.get()		: returns raw pointer without releasing ownership
+		- Characteristics
+			- Only one owner exists
+			- copying is not allowed
+			- ownership can be transferred using move semantics
+			- No reference count
+			- Supports custom deletrs
+	- Weak pointer
+		Non-owning reference to the shared object
+		- Syntax
+			- shared_ptr<T> shared_pointer_name = make_shared<T>(args);
+			- weak_ptr<T> weak_pointer_name = shared_pointer_name;
+		- Functions
+			- lock()	: return shared object pointer if exists else nullptr
+			- expired()	: checks if the shared object is already destroyed
+		- Characteristics
+			- reference count is not incremented
+			- Should always check if the valid object exists before accessing/dereferencing	weak pointer
+----------------------------------------------------------------------------------
+Mental Model
+unique_ptr	: default choice for exclusive ownership
+shared_ptr	: when multiple owners are required
+weak_pt		: Observer for shared object or break ownership cycle				
