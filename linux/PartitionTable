@@ -1,0 +1,155 @@
+*******************************************************************************
+Partition table
+*******************************************************************************
+Overview
+	- data in boot sector of the disk(sector 0)
+	- tells how the disk is divided into drives
+	- tells how data is organised on drive
+		- it knows the bootloader, OS
+	- types
+		-aix
+		- amiga
+		- bsd
+		- dvh
+		- gpt
+		- mac
+		- msdos --> mbr
+		- pc98
+		- sun
+		- loop	--> raw disk access without partition
+
+Popularly used	 types
+	- formated as FAT/NTFS	
+	- MBR[Master Boot Record]
+		- BIOS	[Basic Input Output System]
+		- Sector 0 [First sector]
+			- 512 bytes
+				- [446 bytes] 	Master Boot Code
+							- bootloader
+				- [64 bytes]	partition table info
+							- primary and extended
+				- [2 bytes ]	MBR signature
+							- 0x55AA --> indicates valid MBR	
+		- total 64bytes	-> 4 entries
+			- only 4 primary partitions can be created
+		- out of 4, one can be created as extended partition 
+			- extended partition can further be divided into 23 partitions 
+		- supports partition upto 2TB
+		- data recover is difficult
+		
+	
+	- GPT[GUID Partition table]
+		- globally unique identifier[GUID]
+		- Sector 1 	
+				- Sector 0 kept empty for MBR,for backward compatibility
+		- UEFI	[Unified Extensible Firmware Interface]
+		- 128 entries
+		- supports partition upto 9.7 Billion TB
+		- data recovery is possible as backup partiton is created
+		
+Linux utilities:
+CLI:
+	- fdisk		: MBR
+	- gdisk 	: GPT
+	- parted	: MBR & GPT
+GUI:	
+	- gparted	: MBR & GPT
+	
+Analysis
+1. ddi image os mounted as a loop device
+	losetup -f <ddi image>
+	
+2. Check for ddi image loop device
+	losetup -l
+	/dev/loop23         0      0         0  0 <path_to_image>.ddi   0     512
+
+Commands to check for type of partition
+3. Using parted
+	sudo parted  /dev/loop23 print 
+Output:
+Model: Loopback device (loopback)
+Disk /dev/loop23: 2000MB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos				<-------------------------------- Here we can see the type of partition table of our image		
+Disk Flags: 
+
+Number  Start   End     Size    Type     File system  Flags
+ 3      1049kB  2097kB  1049kB  primary
+ 1      4194kB  273MB   268MB   primary  fat16
+ 2      327MB   1804MB  1476MB  primary  ext3
+ 
+4. Using fdisk
+	 sudo fdisk -l  /dev/loop23 
+Output:
+Disk /dev/loop23: 1.86 GiB, 2000000000 bytes, 3906250 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos 				<-------------------------------- Here we can see the type of partition table of our image
+Disk identifier: 0x5f7e3dde
+						|----------------------------> Partition ID
+Device        Boot  Start     End Sectors  Size Id Type
+/dev/loop23p1        8192  532479  524288  256M  b W95 FAT32			-> 0bh ID is for fat32 since OS uses this file system this partition might have been created with this ID 
+/dev/loop23p2      638976 3522559 2883584  1.4G 83 Linux			-> 83h ID for linux file system other ID are also there check link below
+/dev/loop23p3        2048    4095    2048    1M a2 unknown			-> a2h ID for Altera Cyclone V preloader 
+
+Partition table entries are not in disk order.
+
+5. Using blkid
+	sudo blkid /dev/loop23
+Output:
+/dev/loop23: PTUUID="5f7e3dde" PTTYPE="dos" <-------------------------------- Here we can see the type of partion table of our image
+
+6. Reading the MBR
+Command:
+sudo dd if=/dev/loop23 bs=512 count=1 | hexdump -C
+
+Output:
+
+00000000  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+*
+000001b0  00 00 00 00 00 00 00 00  de 3d 7e 5f 00 00 00 82  |.........=~_....|
+000001c0  03 00 0b 25 04 21 00 20  00 00 00 00 08 00 00 c5  |...%.!. ........|
+000001d0  1f 27 83 44 29 db 00 c0  09 00 00 00 2c 00 00 20  |.'.D).......,.. |
+000001e0  21 00 a2 41 01 00 00 08  00 00 00 08 00 00 00 00  |!..A............|
+000001f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 55 aa  |..............U.|
+1+0 records in
+1+0 records out
+512 bytes copied, 0.000193507 s, 2.6 MB/s
+00000200
+
+Decoding the output:
+
+00000000  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 
+ 				   |<------------------------------------------ Disk identifier
+ 				   	       |<------------------------------ Unknown	
+						    |<------------------------- Partition 1 at 0x01be
+000001b0  00 00 00 00 00 00 00 00  de 3d 7e 5f 00 00 00 82  
+						     |	|<--------------------- Starting head		[8 bits]
+						     |<------------------------ Boot indicator		[8 bits]	-> 0x80 [Active]
+						    |<------------------------- Partition 2 at 0x01ce
+000001c0  03 00 0b 25 04 21 00 20  00 00 00 00 08 00 00 c5  
+	  ||	|  |  ||    |		 |<------------------------------------ Total sectors		[32 bits]
+	  ||	|  |  ||    |<------------------------------------------------- Relative sectors	[32 bits]
+	  ||	|  |  ||<------------------------------------------------------ End cylinder		[10 bits]
+	  ||	|  |  |<------------------------------------------------------- End sector		[6 bits]
+	  ||	|   |<--------------------------------------------------------- end head		[8 bits]    	    		 	
+	  ||	|<------------------------------------------------------------- System ID		[8 bits]
+	  ||<------------------------------------------------------------------ start cylinder		[10 bits]	
+	  |<------------------------------------------------------------------- start sector		[6 bits]
+
+						    |<------------------------- Partition 3 at 0x01de
+000001d0  1f 27 83 44 29 db 00 c0  09 00 00 00 2c 00 00 20  
+						    |<------------------------- Partition 4 at 0x01ee
+000001e0  21 00 a2 41 01 00 00 08  00 00 00 08 00 00 00 00 
+						    |<------------------------- Signature
+000001f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 55 aa
+1+0 records in
+1+0 records out
+512 bytes copied, 0.000193507 s, 2.6 MB/s
+00000200
+
+
+Imp Links:
+https://en.wikipedia.org/wiki/Partition_type
+
