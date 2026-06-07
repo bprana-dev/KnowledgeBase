@@ -1,0 +1,104 @@
+***************************************************************************
+make
+***************************************************************************
+Overview
+make is a utility that automates tasks by executing instructions defined in a Makefile/makefile.
+
+--------------------------------------------------------------------------
+Understanding
+	- Install(Debian based)	: sudo apt install -y make
+	- Executes file 	: Makefile/makefile
+	- Makefile consists of
+		- targets
+			- .PHONY: targets
+				- actions
+		- recipes
+			- Commands to be executed (shell commands)
+			- Command start with the tab character( one \t)
+		- dependencies
+		- variables
+	- Behaviour
+		- Multiple targets and recipes can exists
+		- If not specified by default executes the first target
+		- if the file is named other than makefile/Makefile the execute command as follows 
+			make -f <file_name>
+		- make file ex. test.mk can be included into another make file using "include"
+		- also missing files can be included in the similar manner
+			include test.mk
+		- putting @ in front of the recipes silents the command being run on terminal
+			- Ex. on terminal we will not see text ./a.out	
+		- macros can be defined using define and endef
+			- Ex. define some_macro
+				echo "Hello"
+				echo "world:
+			      endef
+	- Assignment
+		- Simple	(:=)
+			- Value is set immediately when Make reads this line
+		- Recursive	(=)
+			- value not evaluated until the variable is used
+		- Append	(+=)
+			- Adds to an existing variable
+		- Conditional	(?=)
+			- Sets the value only if the variable is not already defined	
+			- default value
+	- Automatic variables
+		- $^	: all the prerequisite/dependencies (no duplicates)
+		- $@	: target name
+		- $<	: First prerequisite/dependency
+		- $?	: Prerequisites that are newer than the target
+		- $*	: stem( the part name matched by %)(wildcard match)
+		- Example
+			gcc $(CFLAGS) $< -o $@
+	- Environment variables and Makefile variables
+		- Make automatically imports the shell's environment variables
+		- If same variable exists in multiple places the
+			- Command line > Makefile > Environment
+	- Pattern rules
+		- helps define generic build rules using %
+		- Example
+			%.o : %.c
+	- functions
+		- Manipulate and process data inside the makefile as everything inside file is string
+		- Syntax
+			$(function_name arg1,arg2,arg3)
+		- Example : function running terminal commands
+			$(shell find -iname "*.c")
+	- Pattern substitution
+		- Replacing one pattern with the another and can directory paths
+		- Example
+			SRC = main.c test.c
+			OBJ_FILE = $(patsubst %c,%o, $(SRC))			--> suffix only
+			OBJ_FILE += $(pathsubst src/%.c,build/%.o,$(SRC))	--> transform the path
+	- Substitute reference
+		- Simple and replaces the suffix only
+		- Example
+			OBJ_FILE = $(SRC:%.c=%.o)
+	- Debugging
+		- dry runs the make and not generates the output
+			make -n <target> 
+		- print database
+			make -p
+		- verbose output
+			$(info text)
+				- Example $(info $(SRC) $(OBJ_FILE))
+			@echo
+	- Use case
+		- Build source code (compilation)
+--------------------------------------------------------------------------
+Mental Model
+	- Recipes will be executed only if the target is older than all the dependencies 
+		-This will happen when dependencies have changed/modified
+	- If the target is newer than the dependencies then even if the dependencies are modified the recipe will not be executed
+	- When make is run:
+		- Finds the target
+		- Checks dependencies
+		- If a dependency does not exist --> looks for another target to generate it
+		- dependencies are resolved from left to right
+		- Executes the recipe if conditions are met
+	- Automatic variables are internal in nature
+--------------------------------------------------------------------------
+
+How do I use it?
+	- Compile kernel
+	- Automate the generation .mo files when working with gettext for supporting event/error logging in ENG/JP languages	
