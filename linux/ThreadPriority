@@ -1,0 +1,43 @@
+RT and non-RT scheduling policies:
+	SCHED_DEADLINE > SCHED_RR/SCHED_FIFO > SCHED_OTHER > SCHED_BATCH > SCHED_IDLE
+	|---------- RT --------------------|   |-------------- non-RT --------------|
+
+Priorities:
+	<---------------------------------------------------------------------------|High priority
+					     |---------	Nice -----------------------|			
+					      -20				   +19
+	|				     |					    |
+	0				   99 100				   139
+	|<-	rt_prio			   ->|<- 	static_prio		  ->|				
+    prio|--------------------------------------------------------------------------->	
+VxWorks
+	|				     |
+	255				     0
+Types of priorities:
+	1. static_prio
+		- non RT
+		- static_prio = 120 + nice
+	2. rt_prio
+		- RT
+		- MAX_RT_PRIO-1 - rt_priority
+	3. normal_prio
+		- RT		= MAX_RT_PRIO-1 - rt_priority	
+		- non RT	= static_prio
+	4. prio
+		- effective priority [ boosting priority, mapping priorities for all the scheduling policies]
+		- RT : MAX_RT_PRIORITY - 1 - rt_priority
+
+To check priorities in procfs:
+	/proc/<pid>/stat
+		- cat /proc/<pid>/stat | awk '{ print $18 "," $40 }'
+							|	|--- rt_prio[real time priority only applicable for RT task]
+							|----------- [top output show this value][also ps -o priority ][prio - MAX_RT_PRIO]
+	/proc/<pid>/sched
+
+Change priority:
+	- RT		: chrt -p <prio> <pid>
+	- non RT	: renice -n <prio> -p <pid>
+
+	
+	
+
