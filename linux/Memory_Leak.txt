@@ -1,0 +1,31 @@
+----------------------------------------------------------------------------------
+Memory leak scenarios
+----------------------------------------------------------------------------------
+Overview
+	- Focus is on how to watch the memory growth and which tools can help
+
+Understanding
+- When Debugging the applications that run in background
+	1. Watching the memory associated with the process 
+		Which section of the memory is growing?
+		- Heap
+			: memory allocated due to malloc/new is not getting free
+			: steadily increasing RSS
+		- Shared
+			: memory mapped in the process virtual space but the mapping is happening multiple time
+			: multiple mapping of the same segment
+		- anonymous memory
+			: memory mappeded into the process context due to mmap
+
+	2. Tools used
+		- pmap
+			: quick memory layout
+			: helps identify which region is growing
+		- smaps
+			: detail breakdown per mapping
+		- maps
+			: lists virtual mapping
+		- perf	
+			: helped identify the hotspot
+			: cannot tell if it is memory leak but helps identification
+ 
